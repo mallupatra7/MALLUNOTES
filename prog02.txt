@@ -1,0 +1,98 @@
+000100 IDENTIFICATION DIVISION.                                         00010000
+000200 PROGRAM-ID. P05AP02.                                             00020000
+000300 DATA DIVISION.                                                   00030000
+000400 WORKING-STORAGE SECTION.                                         00040000
+000500 01  WS-CA       PIC X(01).                                       00050000
+000600 01  WS-CHOICE   PIC 9(01) VALUE ZERO.                            00060000
+000700     88 VALID-CHOICE       VALUES 1 THRU 4.                       00070000
+000800 01  WS-CHOICE-X REDEFINES WS-CHOICE  PIC X(01).                  00080000
+000900 01  WS-DATE-TIME     PIC S9(15) COMP-3 VALUE ZERO.               00090000
+001000 01  WS-MESSAGE  PIC X(30) VALUE                                  00100000
+001100     'END OF THE PROGRAM, BYE, BYE!!'.                            00110000
+001200 COPY P05AS02.                                                    00120001
+001300 COPY DFHAID.                                                     00130000
+001400 LINKAGE SECTION.                                                 00140000
+001500 01  DFHCOMMAREA     PIC X(01).                                   00150000
+001600 PROCEDURE DIVISION.                                              00160000
+001700 MAIN-PARA.                                                       00170000
+001800     IF EIBCALEN = ZERO                                           00180000
+001900         PERFORM FIRST-PARA                                       00190000
+002000     ELSE                                                         00200000
+002100         PERFORM NEXT-PARA.                                       00210000
+002200 END-PARA.                                                        00220000
+002300     EXEC CICS RETURN                                             00230000
+002400         TRANSID('P05B')                                          00240000
+002500         COMMAREA(WS-CA)                                          00250000
+002600     END-EXEC.                                                    00260000
+002700 FIRST-PARA.                                                      00270000
+002800     MOVE LOW-VALUES TO MMAPO                                     00280000
+002900     PERFORM SEND-MAP.                                            00290000
+003000 SEND-MAP.                                                        00300000
+003100     EXEC CICS SEND                                               00310000
+003200         MAP('MMAP')                                              00320000
+003300         MAPSET('P05AS02')                                        00330000
+003400         FROM (MMAPO)                                             00340000
+003500         ERASE                                                    00350000
+003600     END-EXEC.                                                    00360000
+003700 NEXT-PARA.                                                       00370000
+003800     IF EIBAID = DFHPF3                                           00380000
+003900         EXEC CICS SEND TEXT                                      00390000
+004000             FROM(WS-MESSAGE)                                     00400000
+004100             ERASE                                                00410000
+004200         END-EXEC                                                 00420000
+004300         EXEC CICS RETURN                                         00430000
+004400         END-EXEC                                                 00440000
+004500     ELSE                                                         00450000
+004600         IF EIBAID = DFHENTER                                     00460000
+004700             PERFORM PROCESS-PARA                                 00470000
+004800         ELSE                                                     00480000
+004900             MOVE 'INVALID KEY PRESSED' TO MESSAGEO               00490000
+005000         END-IF                                                   00500000
+005100     END-IF                                                       00510000
+005200         PERFORM SEND-MAP.                                        00520000
+005300 PROCESS-PARA.                                                    00530000
+005400     PERFORM RECEIVE-MAP.                                         00540000
+005500     MOVE CHOICEI TO WS-CHOICE-X                                  00550000
+005600     IF VALID-CHOICE                                              00560002
+005700        PERFORM TRANSFER-PARA                                     00570000
+005800     ELSE                                                         00580000
+005900        MOVE 'INVALID CHOICE' TO MESSAGEO                         00590000
+006000     END-IF.                                                      00600000
+006100 TRANSFER-PARA.                                                   00610000
+006200     EVALUATE WS-CHOICE                                           00620000
+006300        WHEN 1                                                    00630000
+006400             EXEC CICS                                            00640005
+006500                XCTL PROGRAM('P05AP01')                           00650005
+006600             END-EXEC                                             00660000
+006700*       WHEN 2                                                    00670001
+006800*            EXEC CICS XCTL WS-IN2O                               00680004
+006900*                 PROGRAM('P05AP03')                              00690001
+007000*            END-EXEC                                             00700001
+007100*       WHEN 3                                                    00710001
+007200*            EXEC CICS XCTL WS-IN2O                               00720004
+007300*                 PROGRAM('P05AP04')                              00730001
+007400*            END-EXEC                                             00740001
+007500*       WHEN 4                                                    00750001
+007600*            EXEC CICS XCTL WS-IN2O                               00760004
+007700*                 PROGRAM('P05AP05')                              00770001
+007800*            END-EXEC                                             00780001
+007900        WHEN OTHER                                                00790000
+008000             MOVE 'PROGRAM NOT YET READY' TO MESSAGEO             00800000
+008100        END-EVALUATE.                                             00810000
+008200 RECEIVE-MAP.                                                     00820000
+008300     EXEC CICS RECEIVE                                            00830000
+008400         MAP('MMAP')                                              00840000
+008500         MAPSET('P05AS02')                                        00850000
+008600         INTO(MMAPI)                                              00860000
+008700     END-EXEC.                                                    00870000
+008800 DATE-TIME-PARA.                                                  00880000
+008900     EXEC CICS ASKTIME                                            00890000
+009000          ABSTIME(WS-DATE-TIME)                                   00900000
+009100     END-EXEC.                                                    00910000
+009200     EXEC CICS FORMATTIME                                         00920000
+009300          ABSTIME(WS-DATE-TIME)                                   00930000
+009400          DDMMYYYY(DATEO)                                         00940003
+009500          DATESEP                                                 00950000
+009600          TIME(TIMEO)                                             00960003
+009700          TIMESEP                                                 00970000
+009800     END-EXEC.                                                    00980000
