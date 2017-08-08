@@ -1,0 +1,225 @@
+000100 IDENTIFICATION DIVISION.                                         00010000
+000200 PROGRAM-ID. P37AP05.                                             00020000
+000300 DATA DIVISION.                                                   00030000
+000400 WORKING-STORAGE SECTION.                                         00040000
+000500 01  WS-CA.                                                       00050001
+000600     03 WS-PROCESS-FLAG     PIC X(01) VALUE SPACES.               00060001
+000700        88 PROCESS-KEY      VALUE '1'.                            00070001
+000800        88 PROCESS-ADD      VALUE '2'.                            00080001
+000900        88 PROCESS-U-D      VALUE '3'.                            00090001
+001000        88 PEOCESS-DET      VALUE '2','3'.                        00100001
+001100     03 WS-EMP-ID           PIC X(05) VALUE SPACES.               00110001
+001200 01  WS-RECORD.                                                   00120000
+001300     02 WS-ID            PIC X(05).                               00130000
+001400     02 WS-NAME          PIC X(15).                               00140000
+001500     02 WS-LOC           PIC X(03).                               00150000
+001600     02 WS-DOB.                                                   00160000
+001700        03 WS-YY         PIC 9(04).                               00170000
+001800        03 WS-MM         PIC 9(02).                               00180000
+001900        03 WS-DD         PIC 9(02).                               00190000
+002000     02 WS-TECH          PIC X(05).                               00200000
+002100     02 WS-EARN          PIC 9(05)V99.                            00210000
+002200     02 WS-DEDN          PIC 9(05)V99.                            00220000
+002300 01 P-DOB.                                                        00230000
+002400        05 WS-DD         PIC 9(02).                               00240000
+002500        05 FILLER        PIC X(01) VALUE ':'.                     00250000
+002600        05 P-MMM         PIC X(03).                               00260000
+002700        05 FILLER        PIC X(01) VALUE ':'.                     00270000
+002800        05 WS-YY         PIC 9(04).                               00280000
+002900     02 MONTH PIC X(36)                                           00290000
+003000              VALUE 'JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC'.       00300000
+003100     02 MONTH-TEMP REDEFINES MONTH.                               00310000
+003200        05 MONTH-T       PIC X(03) OCCURS 12 TIMES.               00320000
+003300 01  WS-MESSAGE          PIC X(30).                               00330000
+003400 01  P-VARIABLE.                                                  00340000
+003500     02 P-EARN           PIC ZZ,ZZ9.99.                           00350000
+003600     02 P-EARN-O REDEFINES P-EARN PIC X(09).                      00360000
+003700     02 P-DEDN           PIC ZZ,ZZ9.99.                           00370000
+003800     02 P-DEDN-O REDEFINES P-DEDN PIC X(09).                      00380000
+003900     02 P-SAL            PIC ZZ,ZZ9.99.                           00390000
+004000     02 P-SAL-O REDEFINES P-SAL PIC X(09).                        00400000
+004100     02 P-SAL-T          PIC 9(05)V99.                            00410000
+004200 01  WS-DATE-TIME        PIC S9(15) COMP-3 VALUE ZERO.            00420000
+004300 01  WS-RESP-CODE        PIC S9(08) COMP VALUE ZERO.              00430000
+004400     COPY P37AS05.                                                00440000
+004500     COPY DFHAID.                                                 00450000
+004600 LINKAGE SECTION.                                                 00460000
+004700 01 DFHCOMMAREA  PIC X(06).                                       00470001
+004800 PROCEDURE DIVISION.                                              00480000
+004900 MAIN-PARA.                                                       00490000
+005000     IF EIBCALEN = ZERO                                           00500000
+005100        PERFORM FIRST-PARA                                        00510000
+005200     ELSE                                                         00520000
+005300        MOVE DFHCOMMAREA TO WS-CA                                 00530001
+005400        PERFORM NEXT-PARA                                         00540000
+005500     END-IF.                                                      00550000
+005600 END-PARA.                                                        00560000
+005700     EXEC CICS RETURN                                             00570000
+005800         TRANSID('P37E')                                          00580000
+005900         COMMAREA(WS-CA)                                          00590000
+006000     END-EXEC.                                                    00600000
+006100 FIRST-PARA.                                                      00610000
+006200     MOVE LOW-VALUES TO KEYMAPO                                   00620000
+006300     PERFORM SEND-KEY-MAP.                                        00630000
+006400 SEND-KEY-MAP.                                                    00640000
+006500     PERFORM DATE-TIME-PARA                                       00650000
+006600     EXEC CICS SEND                                               00660000
+006700         MAP('KEYMAP')                                            00670000
+006800         MAPSET('P37AS05')                                        00680000
+006900         FROM(KEYMAPO)                                            00690000
+007000         ERASE                                                    00700000
+007100     END-EXEC.                                                    00710000
+007200 RECIEVE-KEY-MAP.                                                 00720002
+007300     PERFORM DATE-TIME-PARA                                       00730002
+007400     EXEC CICS RECIEVE                                            00740002
+007500         MAP('KEYMAP')                                            00750002
+007600         MAPSET('P37AS05')                                        00760002
+007700         INTO(KEYMAPO)                                            00770002
+007800         ERASE                                                    00780002
+007900     END-EXEC.                                                    00790002
+008000 NEXT-PARA.                                                       00800000
+008100     EVALUATE TRUE                                                00810001
+008200      WHEN PROCESS-KEY                                            00820001
+008300           PERFORM KEY-PARA                                       00830001
+008400      WHEN PROCESS-DET                                            00840001
+008500           PERFORM DETAIL-PARA                                    00850001
+008600     END-EVALUATE.                                                00860001
+008700 SEND-PARA                                                        00870001
+008800     EVALUATE TRUE                                                00880001
+008900      WHEN PROCESS-KEY                                            00890001
+009000           SEND KEY-PARA                                          00900001
+009100      WHEN PROCESS-DET                                            00910001
+009200           SEND DETAIL-PARA                                       00920001
+009300     END-EVALUATE.                                                00930001
+009400 NEXT-PARA-X.                                                     00940001
+009500     EXIT.                                                        00950001
+009600 KEY-PARA.                                                        00960001
+009700     PERFORM DATE-TIME-PARA                                       00970000
+009800     EVALUATE EIBAID                                              00980000
+009900      WHEN DFHPF3                                                 00990000
+010000*         BACK TO MENU-PROGRAM                                    01000000
+010100          EXEC CICS SEND TEXT                                     01010001
+010200              FROM(WS-MESSAGE)                                    01020001
+010300              ERASE                                               01030001
+010400          END-EXEC                                                01040001
+010500          EXEC CICS RETURN                                        01050001
+010600          END-EXEC                                                01060001
+010700      WHEN DFHENTER                                               01070000
+010800*         CHECK ENTERED-VALUE                                     01080000
+010900          IF WS-ID = SPACES                                       01090001
+011000             PERFORM SEND-KEY-MAP                                 01100002
+011100             MOVE 'PLEASE ENTER EMPLOYEE-ID' TO MSG1              01110002
+011200          ELSE                                                    01120000
+011300*            VALIDATE ENTERED-VALUE                               01130000
+011400             PERFORM READ-EMPLOYEE                                01140001
+011500             PERFORM SEND-DETAIL-MAP                              01150001
+011600          END-IF                                                  01160000
+011700      WHEN OTHER                                                  01170000
+011800         MOVE 'INVALID KEY PRESSSED' TO MSG1                      01180000
+011900     END-EVALUATE                                                 01190000
+012000 READ-EMPLOYEE.                                                   01200001
+012100     EXEC CICS READ                                               01210001
+012200         FILE('P37AFILE')                                         01220001
+012300         RIDFLD(IDI)                                              01230001
+012400         INTO(WS-RECORD)                                          01240001
+012500         RESP(WS-RESP-CODE)                                       01250001
+012600     END-EXEC.                                                    01260001
+012700     EVALUATE WS-RESP-CODE                                        01270001
+012800     WHEN DFHRESP(NORMAL)                                         01280001
+012900         MOVE WS-ID   TO IDO                                      01290001
+013000         MOVE WS-NAME TO NAMEO                                    01300001
+013100         MOVE WS-LOC  TO LOCO                                     01310001
+013200         PERFORM DOB-PARA                                         01320001
+013300         MOVE WS-TECH TO TECHO                                    01330001
+013400         MOVE WS-EARN TO P-EARN                                   01340001
+013500         MOVE WS-DEDN TO P-DEDN                                   01350001
+013600         COMPUTE P-SAL-T = WS-EARN - WS-DEDN                      01360001
+013700         MOVE P-SAL-T TO P-SAL                                    01370001
+013800         MOVE P-EARN-O TO EARNO                                   01380001
+013900         MOVE P-DEDN-O TO DEDNO                                   01390001
+014000         MOVE P-SAL TO SALO                                       01400001
+014100         SET PROCESS-U-D TO TRUE                                  01410001
+014200         MOVE 'UPDATE/DELETE' TO MODO                             01420001
+014300         MOVE DFHBMPRO TO LABEL1A                                 01430001
+014400         MOVE DFHBMDRK TO LABEL2A                                 01440001
+014500     WHEN DFHRESP(NOTFND)                                         01450001
+014600         MOVE SPACES TO IDO,NAMEO,LOCO,DOBO,TECHO,EARNO,DEDNO,SALO01460001
+014700         MOVE 'FILE NOT FOUND' TO MSG                             01470001
+014800         MOVE PROCESS-ADD TO TRUE                                 01480001
+014900         MOVE DFHBMDRK TO LABEL1A                                 01490001
+015000         MOVE DFHBMPRO TO LABEL2A                                 01500001
+015100     WHEN OTHER                                                   01510001
+015200         MOVE 'ERROR IN PROCESSING' TO MSG                        01520001
+015300    END-EVALUATE.                                                 01530001
+015400 SEND-DETAIL-MAP.                                                 01540001
+015500     PERFORM DATE-TIME-PARA                                       01550001
+015600     EXEC CICS SEND                                               01560001
+015700         MAP('DETMAP')                                            01570001
+015800         MAPSET('P37AS05')                                        01580001
+015900         FROM(DETMAPO)                                            01590001
+016000         ERASE                                                    01600001
+016100     END-EXEC.                                                    01610000
+016200 DETAIL-PARA.                                                     01620001
+016300     EVALUATE EIBAID                                              01630001
+016400      WHEN DFHPF2                                                 01640001
+016500          PERFORM ADD-PARA                                        01650001
+016600      WHEN DFHPF3                                                 01660001
+016700          PERFORM SEND-KEY-MAP                                    01670002
+016800      WHEN DFHPF4                                                 01680001
+016900          PERFORM UPDATE-PARA                                     01690001
+017000      WHEN DFHPF5                                                 01700001
+017100          PERFORM DELETE-PARA                                     01710001
+017200      WHEN OTHER                                                  01720001
+017300          MOVE 'INVALID KEY PRESSED' TO MSG2                      01730001
+017400     END-EVALUATE                                                 01740001
+017500 ADD-PARA.                                                        01750001
+017600     PERFORM RECIEVE-DATAIL-MAP                                   01760002
+017700     PERFORM VALDATION                                            01770002
+017800     PERFORM WRITE-PARA.                                          01780002
+017900 WRITE-PARA.                                                      01790002
+018000     EXEC CICS WRITE                                              01800002
+018100         FILE('P37AFILE')                                         01810002
+018200         RIDFLD(WS-EMP-ID)                                        01820002
+018300         FROM(WS-RECORD)                                          01830002
+018400     END-EXEC.                                                    01840002
+018500 UPDATE-PARA.                                                     01850001
+018600     PERFORM RECIEVE-DATAIL-MAP                                   01860002
+018700     PERFORM VALDATION                                            01870002
+018800     PERFORM REWRITE-PARA.                                        01880002
+018900 REWRITE-PARA.                                                    01890002
+019000     EXEC CICS REWRITE                                            01900002
+019100         FILE('P37AFILE')                                         01910002
+019200         RIDFLD(WS-EMP-ID)                                        01920002
+019300         FROM(WS-RECORD)                                          01930002
+019400     END-EXEC.                                                    01940002
+019500 DELETE-PARA.                                                     01950001
+019600     EXEC CICS DELETE                                             01960002
+019700         FILE('P37AFILE')                                         01970002
+019800         RIDFLD(WS-EMP-ID)                                        01980002
+019900     END-EXEC.                                                    01990002
+020000     EVALUATE WS-RESP-CODE                                        02000002
+020100     IF DFHRESP(NORMAL)                                           02010002
+020200        MOVE 'DELETE SUCCESSFULL' TO MSG2                         02020002
+020300     ELSE                                                         02030002
+020400        EXEC CICS UNLOCK                                          02040002
+020500            FILE('P37AFILE')                                      02050002
+020600        END-EXEC                                                  02060002
+020700         MOVE 'DELETE NOT SUCCESSFULL' TO MSG2                    02070002
+020800     END-IF                                                       02080002
+020900     SET PROCESS-KEY TO TRUE                                      02090002
+021000*    MOVE EMP-ID TO EMP-ID                                        02100002
+021100 DOB-PARA.                                                        02110000
+021200     MOVE CORR WS-DOB TO P-DOB                                    02120000
+021300     MOVE MONTH-T(WS-MM) TO P-MMM                                 02130000
+021400     MOVE P-DOB TO DOBO.                                          02140000
+021500 DATE-TIME-PARA.                                                  02150000
+021600     EXEC CICS ASKTIME                                            02160000
+021700         ABSTIME(WS-DATE-TIME)                                    02170000
+021800     END-EXEC                                                     02180000
+021900     EXEC CICS FORMATTIME                                         02190000
+022000         ABSTIME(WS-DATE-TIME)                                    02200000
+022100         DDMMYYYY(DATEO)                                          02210000
+022200         DATESEP                                                  02220000
+022300         TIME(TIMEO)                                              02230000
+022400         TIMESEP                                                  02240000
+022500     END-EXEC.                                                    02250000
