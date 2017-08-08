@@ -1,0 +1,555 @@
+VMEMBER NAME  P13AP01
+V000100 IDENTIFICATION DIVISION.                                         00010000
+V000200 PROGRAM-ID. P13AP01.                                             00020001
+V000300 DATA DIVISION.                                                   00030000
+V000400 WORKING-STORAGE SECTION.                                         00040000
+V000500 01  WS-CA       PIC X(01).                                       00050000
+V000600 01  WS-IN1      PIC 9(02).                                       00060000
+V000700 01  WS-IN1O REDEFINES WS-IN1 PIC X(02).                          00070000
+V000800 01  WS-IN2      PIC 9(02).                                       00080000
+V000900 01  WS-IN2O REDEFINES WS-IN2 PIC X(02).                          00090000
+V001000 01  WS-OUT      PIC 9(03).                                       00100000
+V001100 01  WS-MESSAGE  PIC X(30) VALUE                                  00110000
+V001200     'END OF THE PROGRAM, BYE, BYE!!'.                            00120000
+V001300     COPY P13AS01.                                                00130001
+V001400     COPY DFHAID.                                                 00140000
+V001500 LINKAGE SECTION.                                                 00150000
+V001600 01  DFHCOMMAREA     PIC X(01).                                   00160000
+V001700 PROCEDURE DIVISION.                                              00170000
+V001800 MAIN-PARA.                                                       00180000
+V001900     IF EIBCALEN = ZERO                                           00190000
+V002000         PERFORM FIRST-PARA                                       00200000
+V002100     ELSE                                                         00210000
+V002200         PERFORM NEXT-PARA.                                       00220000
+V002300 END-PARA.                                                        00230000
+V002400     EXEC CICS RETURN                                             00240000
+V002500         TRANSID('P13A')                                          00250001
+V002600         COMMAREA(WS-CA)                                          00260000
+V002700     END-EXEC.                                                    00270000
+V002800 FIRST-PARA.                                                      00280000
+V002900     MOVE LOW-VALUES TO CALMAPO                                   00290004
+V003000     PERFORM SEND-PARA.                                           00300005
+V003100 SEND-PARA.                                                       00310003
+V003200     EXEC CICS SEND                                               00320000
+V003300         MAP('CALMAP')                                            00330000
+V003400         MAPSET('P13AS01')                                        00340001
+V003500         FROM (CALMAPO)                                           00350000
+V003600         ERASE                                                    00360000
+V003700     END-EXEC.                                                    00370000
+V003800 NEXT-PARA.                                                       00380000
+V003900     EVALUATE EIBAID                                              00390007
+V004000       WHEN DFHPF3                                                00400008
+V004100         EXEC CICS SEND TEXT                                      00410000
+V004200             FROM(WS-MESSAGE)                                     00420000
+V004300             ERASE                                                00430000
+V004400         END-EXEC                                                 00440000
+V004500         EXEC CICS RETURN                                         00450000
+V004600         END-EXEC                                                 00460000
+V004700       WHEN  DFHENTER                                             00470007
+V004800         PERFORM PROCESS-PARA                                     00480000
+V004900       WHEN OTHER                                                 00490007
+V005000         MOVE 'INVALID KEY PRESSED' TO MESSAGEO                   00500006
+V005100         END-EVALUATE                                             00510009
+V005200         PERFORM SEND-PARA.                                       00520006
+V005300 PROCESS-PARA.                                                    00530000
+V005400     PERFORM RECEIVE-MAP.                                         00540000
+V005500     IF INPUT1L = ZERO OR INPUT2L = ZERO                          00550000
+V005600        MOVE 'PLEASE ENTER VALID INPUTS' TO MESSAGEO              00560000
+V005700     ELSE                                                         00570000
+V005800        IF INPUT1I IS NUMERIC AND INPUT2I IS NUMERIC              00580000
+V005900            MOVE INPUT1I TO WS-IN1O                               00590000
+V006000            MOVE INPUT2I TO WS-IN2O                               00600000
+V006100            COMPUTE WS-OUT = WS-IN1 + WS-IN2                      00610000
+V006200            MOVE WS-OUT  TO OUTPUTO                               00620000
+V006300            MOVE 'SUM OF 2 NUMBERS IS DISPLAYED' TO MESSAGEO      00630000
+V006400        ELSE                                                      00640000
+V006500            MOVE 'PLEASE ENTER VALID NUMERIC INPUTS' TO MESSAGEO. 00650000
+V006600 RECEIVE-MAP.                                                     00660000
+V006700     EXEC CICS RECEIVE                                            00670000
+V006800         MAP('CALMAP')                                            00680000
+V006900         MAPSET('P13AS01')                                        00690001
+V007000         INTO(CALMAPI)                                            00700000
+V007100     END-EXEC.                                                    00710000
+VMEMBER NAME  P13AP03
+V000100 IDENTIFICATION DIVISION.                                         00010001
+V000200 PROGRAM-ID. P13AP03.                                             00020001
+V000300 DATA DIVISION.                                                   00030001
+V000400 WORKING-STORAGE SECTION.                                         00040001
+V000500 01  WS-CA               PIC X(01).                               00050003
+V000600 01  WS-OPTION           PIC 9(01) VALUE ZERO.                    00060005
+V000700     88 VALID-OPTION            VALUES 1 THRU 4.                  00070005
+V000800 01  WS-OPTION-X REDEFINES WS-OPTION                              00080005
+V000900                         PIC X(01).                               00090003
+V001000 01  WS-DATE-TIME        PIC S9(15) COMP-3 VALUE ZERO.            00100003
+V001100 01  WS-MESSAGE          PIC X(30) VALUE                          00110003
+V001200     'END OF THE PROGRAM, BYE, BYE!!'.                            00120001
+V001300     COPY P13AS03.                                                00130001
+V001400     COPY DFHAID.                                                 00140001
+V001500 LINKAGE SECTION.                                                 00150001
+V001600 01  DFHCOMMAREA         PIC X(01).                               00160003
+V001700 PROCEDURE DIVISION.                                              00170001
+V001800 MAIN-PARA.                                                       00180001
+V001900     IF EIBCALEN = ZERO                                           00190001
+V002000         PERFORM FIRST-PARA                                       00200001
+V002100     ELSE                                                         00210001
+V002200         PERFORM NEXT-PARA.                                       00220001
+V002300 END-PARA.                                                        00230001
+V002400     EXEC CICS RETURN                                             00240001
+V002500         TRANSID('P13C')                                          00250001
+V002600         COMMAREA(WS-CA)                                          00260001
+V002700     END-EXEC.                                                    00270001
+V002800 FIRST-PARA.                                                      00280001
+V002900     MOVE LOW-VALUES TO EMPMAPO                                   00290003
+V003000     PERFORM SEND-PARA.                                           00300001
+V003100 SEND-PARA.                                                       00310001
+V003200     PERFORM DATE-TIME-PARA.                                      00320013
+V003300     EXEC CICS SEND                                               00330001
+V003400         MAP('EMPMAP')                                            00340001
+V003500         MAPSET('P13AS03')                                        00350001
+V003600         FROM (EMPMAPO)                                           00360001
+V003700         ERASE                                                    00370001
+V003800     END-EXEC.                                                    00380001
+V003900 NEXT-PARA.                                                       00390001
+V004000     EVALUATE EIBAID                                              00400001
+V004100       WHEN DFHPF3                                                00410001
+V004200         EXEC CICS SEND TEXT                                      00420001
+V004300             FROM(WS-MESSAGE)                                     00430001
+V004400             ERASE                                                00440001
+V004500         END-EXEC                                                 00450001
+V004600         EXEC CICS RETURN                                         00460001
+V004700         END-EXEC                                                 00470001
+V004800       WHEN  DFHENTER                                             00480001
+V004900         PERFORM PROCESS-PARA                                     00490001
+V005000       WHEN OTHER                                                 00500001
+V005100         MOVE 'INVALID KEY PRESSED' TO MESSAGEO                   00510001
+V005200         END-EVALUATE                                             00520001
+V005300         PERFORM SEND-PARA.                                       00530001
+V005400 PROCESS-PARA.                                                    00540001
+V005500     PERFORM RECEIVE-MAP.                                         00550001
+V005600        MOVE OPTIONI TO WS-OPTION-X                               00560005
+V005700        IF VALID-OPTION                                           00570005
+V005800           PERFORM TRANSFER-PARA                                  00580003
+V005900        ELSE                                                      00590003
+V006000           MOVE 'INVALID OPTION' TO MESSAGEO                      00600005
+V006100        END-IF.                                                   00610003
+V006200 TRANSFER-PARA.                                                   00620003
+V006300     EVALUATE WS-OPTION                                           00630005
+V006400        WHEN 1                                                    00640003
+V006500             EXEC CICS XCTL                                       00650003
+V006600                  PROGRAM('P13AP02')                              00660014
+V006700             END-EXEC                                             00670006
+V006800        WHEN 2                                                    00680015
+V006900             EXEC CICS XCTL                                       00690015
+V007000                  PROGRAM('P13AP04')                              00700015
+V007100             END-EXEC                                             00710015
+V007200*       WHEN 3                                                    00720003
+V007300*            EXEC CICS XCTL                                       00730003
+V007400*                 PROGRAM('P13AP05')                              00740015
+V007500*            END-EXEC                                             00750007
+V007600*       WHEN 4                                                    00760003
+V007700*            EXEC CICS XCTL                                       00770003
+V007800*                 PROGRAM('P13AP06')                              00780015
+V007900*            END-EXEC                                             00790007
+V008000       WHEN OTHER                                                 00800003
+V008100            MOVE 'PROGRAM NOT YET READY' TO MESSAGEO              00810003
+V008200      END-EVALUATE.                                               00820003
+V008300 RECEIVE-MAP.                                                     00830001
+V008400     EXEC CICS RECEIVE                                            00840001
+V008500         MAP('EMPMAP')                                            00850001
+V008600         MAPSET('P13AS03')                                        00860001
+V008700         INTO(EMPMAPI)                                            00870001
+V008800     END-EXEC.                                                    00880001
+V008900 DATE-TIME-PARA.                                                  00890013
+V009000     EXEC CICS ASKTIME                                            00900003
+V009100          ABSTIME(WS-DATE-TIME)                                   00910003
+V009200     END-EXEC                                                     00920010
+V009300     EXEC CICS FORMATTIME                                         00930003
+V009400          ABSTIME(WS-DATE-TIME)                                   00940003
+V009500          DDMMYYYY(DATEO)                                         00950009
+V009600          DATESEP                                                 00960008
+V009700          TIME(TIMEO)                                             00970009
+V009800          TIMESEP                                                 00980008
+V009900      END-EXEC.                                                   00990003
+VMEMBER NAME  P13AP02
+V000100 IDENTIFICATION DIVISION.                                         00010000
+V000200 PROGRAM-ID. P13AP02.                                             00020000
+V000300 DATA DIVISION.                                                   00030000
+V000400 WORKING-STORAGE SECTION.                                         00040000
+V000500 01  WS-CA       PIC X(01).                                       00050000
+V000600 01  WS-IN1      PIC 9(02).                                       00060000
+V000700 01  WS-IN1O REDEFINES WS-IN1 PIC X(02).                          00070000
+V000800 01  WS-IN2      PIC 9(02).                                       00080000
+V000900 01  WS-IN2O REDEFINES WS-IN2 PIC X(02).                          00090000
+V001000 01  WS-SUM      PIC 9(04).                                       00100000
+V001100 01  WS-SUB      PIC 9(04).                                       00110003
+V001200 01  WS-PROD     PIC 9(04).                                       00120000
+V001300 01  WS-QUOT     PIC 9(04).                                       00130003
+V001400 01  WS-REMD     PIC 9(04).                                       00140003
+V001500 01  WS-MESSAGE  PIC X(30) VALUE                                  00150000
+V001600     'END OF THE PROGRAM, BYE, BYE!!'.                            00160000
+V001700     COPY P13AS02.                                                00170000
+V001800     COPY DFHAID.                                                 00180000
+V001900 LINKAGE SECTION.                                                 00190000
+V002000 01  DFHCOMMAREA     PIC X(01).                                   00200000
+V002100 PROCEDURE DIVISION.                                              00210000
+V002200 MAIN-PARA.                                                       00220000
+V002300     IF EIBCALEN = ZERO                                           00230000
+V002400         PERFORM FIRST-PARA                                       00240000
+V002500     ELSE                                                         00250000
+V002600         PERFORM NEXT-PARA.                                       00260000
+V002700 END-PARA.                                                        00270000
+V002800     EXEC CICS RETURN                                             00280005
+V002900         TRANSID('P13B')                                          00290007
+V003000         COMMAREA(WS-CA)                                          00300000
+V003100     END-EXEC.                                                    00310000
+V003200 FIRST-PARA.                                                      00320000
+V003300     MOVE LOW-VALUES TO COMPMAPO                                  00330000
+V003400     PERFORM SEND-PARA.                                           00340000
+V003500 SEND-PARA.                                                       00350000
+V003600     EXEC CICS SEND                                               00360000
+V003700         MAP('COMPMAP')                                           00370000
+V003800         MAPSET('P13AS02')                                        00380000
+V003900         FROM (COMPMAPO)                                          00390000
+V004000         ERASE                                                    00400000
+V004100     END-EXEC.                                                    00410000
+V004200 NEXT-PARA.                                                       00420000
+V004300     EVALUATE EIBAID                                              00430000
+V004400       WHEN DFHPF3                                                00440000
+V004500         EXEC CICS XCTL                                           00450004
+V004600              PROGRAM('P13AP03')                                  00460004
+V004700         END-EXEC                                                 00470000
+V004800       WHEN  DFHENTER                                             00480000
+V004900         PERFORM PROCESS-PARA                                     00490000
+V005000       WHEN OTHER                                                 00500000
+V005100         MOVE 'INVALID KEY PRESSED' TO MESSAGEO                   00510000
+V005200         END-EVALUATE                                             00520000
+V005300         PERFORM SEND-PARA.                                       00530000
+V005400 PROCESS-PARA.                                                    00540000
+V005500     PERFORM RECEIVE-MAP.                                         00550000
+V005600     IF INPUT1L = ZERO OR INPUT2L = ZERO                          00560000
+V005700        MOVE 'PLEASE ENTER VALID INPUTS' TO MESSAGEO              00570000
+V005800     ELSE                                                         00580000
+V005900        IF INPUT1I IS NUMERIC AND INPUT2I IS NUMERIC              00590000
+V006000            MOVE INPUT1I TO WS-IN1O                               00600000
+V006100            MOVE INPUT2I TO WS-IN2O                               00610000
+V006200            PERFORM COMPUTE-PARA                                  00620001
+V006300        ELSE                                                      00630001
+V006400            MOVE 'PLEASE ENTER VALID NUMERIC INPUTS' TO MESSAGEO. 00640001
+V006500 COMPUTE-PARA.                                                    00650002
+V006600            COMPUTE WS-SUM  = WS-IN1 + WS-IN2                     00660001
+V006700            COMPUTE WS-SUB  = WS-IN1 - WS-IN2                     00670001
+V006800            COMPUTE WS-PROD = WS-IN1 * WS-IN2                     00680001
+V006900            COMPUTE WS-QUOT = WS-IN1 / WS-IN2                     00690001
+V007000            MOVE WS-SUM  TO SUMCO                                 00700001
+V007100            MOVE WS-SUB  TO SUBCO                                 00710001
+V007200            MOVE WS-PROD TO PRODCO                                00720001
+V007300            MOVE WS-QUOT TO QUOTCO.                               00730001
+V007400 RECEIVE-MAP.                                                     00740001
+V007500     EXEC CICS RECEIVE                                            00750001
+V007600         MAP('COMPMAP')                                           00760001
+V007700         MAPSET('P13AS02')                                        00770001
+V007800         INTO(COMPMAPI)                                           00780001
+V007900     END-EXEC.                                                    00790001
+VMEMBER NAME  P13AP04
+V000100 IDENTIFICATION DIVISION.                                         00010001
+V000200 PROGRAM-ID. P13AP04.                                             00020001
+V000300 DATA DIVISION.                                                   00030001
+V000400 WORKING-STORAGE SECTION.                                         00040001
+V000500 01  WS-CA          PIC X(01).                                    00050008
+V000600 01  IDO            PIC X(05)         VALUE SPACES.               00060018
+V000700 01  WS-RESP-CODE   PIC S9(08) COMP   VALUE ZERO.                 00070018
+V000800 01  WS-EARN        PIC ZZ,ZZ.99      VALUE ZERO.                 00080018
+V000900 01  WS-DEDN        PIC ZZ,ZZ.99      VALUE ZERO.                 00090018
+V001000 01  SAL            PIC 9(4)V99       VALUE ZERO.                 00100018
+V001100 01  WS-SAL         PIC ZZ,ZZ.99      VALUE ZERO.                 00110018
+V001200 01  WS-DATE-TIME   PIC S9(15) COMP-3 VALUE ZERO.                 00120018
+V001300 01  DOB-VARIABLES.                                               00130001
+V001400     03 WS-DD       PIC X(02).                                    00140001
+V001500     03 FILLER      PIC X(01)          VALUE '-'.                 00150018
+V001600     03 WS-MMM      PIC X(03).                                    00160018
+V001700     03 FILLER      PIC X(01)          VALUE '-'.                 00170018
+V001800     03 WS-YY       PIC X(04).                                    00180001
+V001900    02 MONTH PIC X(36) VALUE                                      00190024
+V002000                'JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC'.           00200024
+V002100    02 MONTH-TEMP REDEFINES MONTH PIC X(03) OCCURS 12 TIMES.      00210024
+V002200*    03 MONTH-T     PIC X(03) OCCURS 12 TIMES.                    00220023
+V002300 01  WS-MESSAGE     PIC X(30) VALUE                               00230007
+V002400     'END OF THE PROGRAM, BYE, BYE!!'.                            00240001
+V002500     COPY EMPREC.                                                 00250001
+V002600     COPY P13AS04.                                                00260001
+V002700     COPY DFHAID.                                                 00270001
+V002800 LINKAGE SECTION.                                                 00280001
+V002900 01  DFHCOMMAREA     PIC X(01).                                   00290001
+V003000 PROCEDURE DIVISION.                                              00300001
+V003100 MAIN-PARA.                                                       00310001
+V003200     IF EIBCALEN = ZERO                                           00320001
+V003300         PERFORM FIRST-PARA                                       00330001
+V003400     ELSE                                                         00340001
+V003500         PERFORM NEXT-PARA                                        00350007
+V003600     END-IF.                                                      00360007
+V003700 END-PARA.                                                        00370001
+V003800     EXEC CICS RETURN                                             00380001
+V003900         TRANSID('P13D')                                          00390001
+V004000         COMMAREA(WS-CA)                                          00400001
+V004100     END-EXEC.                                                    00410001
+V004200 FIRST-PARA.                                                      00420001
+V004300     MOVE LOW-VALUES TO INQMAPO                                   00430001
+V004400     PERFORM SEND-PARA.                                           00440001
+V004500 SEND-PARA.                                                       00450001
+V004600     EXEC CICS SEND                                               00460001
+V004700         MAP('INQMAP')                                            00470001
+V004800         MAPSET('P13AS04')                                        00480001
+V004900         FROM (INQMAPO)                                           00490001
+V005000         ERASE                                                    00500001
+V005100     END-EXEC.                                                    00510001
+V005200 NEXT-PARA.                                                       00520001
+V005300     EVALUATE EIBAID                                              00530001
+V005400       WHEN DFHPF3                                                00540001
+V005500         EXEC CICS XCTL                                           00550001
+V005600             PROGRAM('P13AP03')                                   00560001
+V005700         END-EXEC.                                                00570025
+V005800       WHEN  DFHENTER                                             00580001
+V005900         PERFORM PROCESS-PARA                                     00590001
+V006000       WHEN OTHER                                                 00600001
+V006100         MOVE 'INVALID KEY PRESSED' TO MESSAGEO                   00610001
+V006200         END-EVALUATE                                             00620001
+V006300         PERFORM SEND-PARA.                                       00630001
+V006400 PROCESS-PARA.                                                    00640001
+V006500     PERFORM RECEIVE-MAP.                                         00650001
+V006600     IF IDQL = ZERO                                               00660003
+V006700        MOVE 'PLEASE ENTER AN EMPLOYEE ID' TO MESSAGEO            00670017
+V006800     ELSE                                                         00680001
+V006900        IF IDQI = SPACES                                          00690018
+V007000           MOVE 'PLEASE ENTER VALID EMPLOYEE ID' TO MESSAGEO      00700019
+V007100        ELSE                                                      00710018
+V007200           PERFORM READ-EMPLOYEE-PARA                             00720019
+V007300        END-IF                                                    00730018
+V007400     END-IF.                                                      00740018
+V007500 READ-EMPLOYEE-PARA.                                              00750001
+V007600            EXEC CICS READ                                        00760001
+V007700                 FILE('P13AFILE')                                 00770014
+V007800                 INTO(MASTER-RECORD)                              00780001
+V007900                 RIDFLD(IDQI)                                     00790001
+V008000                 RESP(WS-RESP-CODE)                               00800001
+V008100            END-EXEC.                                             00810001
+V008200            EVALUATE WS-RESP-CODE                                 00820001
+V008300                 WHEN DFHRESP(NORMAL)                             00830001
+V008400                      PERFORM MOVE-PARA                           00840015
+V008500                 WHEN DFHRESP(NOTFND)                             00850001
+V008600                 MOVE 'RECORD NOT FOUND' TO MESSAGEO              00860007
+V008700                 MOVE SPACES TO NAMEQO, DOBQO,                    00870018
+V008800                            LOCQO, TECHQO, EARNQO, DEDNQO,        00880001
+V008900                            SALQO                                 00890006
+V009000                 WHEN OTHER                                       00900001
+V009100                 MOVE 'CAN NOT ACCESS FILE' TO MESSAGEO           00910007
+V009200                 MOVE SPACES TO NAMEQO, DOBQO,                    00920018
+V009300                            LOCQO, TECHQO, EARNQO, DEDNQO,        00930001
+V009400                            SALQO                                 00940006
+V009500             END-EVALUATE.                                        00950002
+V009600 MOVE-PARA.                                                       00960001
+V009700         MOVE NAME  TO NAMEQO                                     00970001
+V009800         PERFORM DOB-PARA                                         00980007
+V009900         MOVE TECH  TO TECHQO                                     00990001
+V010000         MOVE LOC   TO LOCQO                                      01000001
+V010100         MOVE EARN  TO WS-EARN                                    01010008
+V010200         MOVE WS-EARN  TO EARNQO                                  01020008
+V010300         MOVE DEDN  TO WS-DEDN                                    01030008
+V010400         MOVE WS-DEDN TO DEDNQO                                   01040012
+V010500         COMPUTE SAL = EARN - DEDN                                01050008
+V010600         MOVE SAL   TO WS-SAL                                     01060008
+V010700         MOVE WS-SAL   TO SALQO                                   01070008
+V010800         MOVE 'EMPLOYEE RECORD FOUND' TO MESSAGEO.                01080008
+V010900 DOB-PARA.                                                        01090008
+V011000         MOVE CORR DOB TO DOB-VARIABLES                           01100013
+V011100         MOVE MONTH-TEMP(WS-MM) TO WS-MMM                         01110023
+V011200         MOVE DOB-VARIABLES TO DOBQO.                             01120011
+V011300 RECEIVE-MAP.                                                     01130008
+V011400     EXEC CICS RECEIVE                                            01140008
+V011500         MAP('INQMAP')                                            01150008
+V011600         MAPSET('P13AS04')                                        01160008
+V011700         INTO(INQMAPI)                                            01170008
+V011800     END-EXEC.                                                    01180008
+V011900 DATE-TIME-PARA.                                                  01190018
+V012000         EXEC CICS ASKTIME                                        01200021
+V012100              ABSTIME(WS-DATE-TIME)                               01210018
+V012200         END-EXEC.                                                01220018
+V012300         EXEC CICS FORMATTIME                                     01230018
+V012400              ABSTIME(WS-DATE-TIME)                               01240018
+V012500              DDMMYYYY(DATEQO)                                    01250020
+V012600              DATESEP                                             01260018
+V012700              TIME(TIMEQO)                                        01270022
+V012800         END-EXEC.                                                01280022
+VMEMBER NAME  P13AP05
+V000100IDENTIFICATION DIVISION.                                          00010000
+V000200PROGRAM-ID. P13AP05.                                              00020000
+V000300DATA DIVISION.                                                    00030000
+V000400WORKING-STORAGE SECTION.                                          00040000
+V00050001  WS-CA                                                         00050000
+V000600    03  WS-PROCESS-FLAG     PIC X(01) VALUE SPACES.               00060000
+V000700       88  PROCESS-KEY         VALUE '1'.                         00070000
+V000800       88  PROCESS-ADD         VALUE '2'.                         00080000
+V000900       88  PROCESS-UPD-DEL     VALUE '3'.                         00090000
+V001000       88  PROCESS-DET         VALUE '2', '3'.                    00100000
+V001100    03  WS-EMP-ID           PIC X(05) VALUE SPACES.               00110000
+V001200 01  WS-DATE-TIME           PIC S9(15) COMP-3 VALUE ZERO.         00120000
+V001300LINKAGE SECTION.                                                  00130000
+V00140001  DFHCOMMAREA             PIC X(06).                            00140000
+V001500PROCEDURE DIVISION.                                               00150000
+V001600MAIN-PARA.                                                        00160000
+V001700    IF EIBCALEN = ZERO                                            00170000
+V001800         PERFORM FIRST-PARA                                       00180000
+V001900    ELSE                                                          00190000
+V002000         MOVE DFHCOMMAREA TO WS-CA                                00200000
+V002100         PERFORM NEXT-PARA THRU NEXT-PARA-X                       00210000
+V002200    END-IF.                                                       00220000
+V002300END-PARA.                                                         00230000
+V002400    EXEC CICS RETURN                                              00240000
+V002500         TRANSID('P13E')                                          00250000
+V002600         COMMAREA(WS-CA)                                          00260000
+V002700    END-EXEC.                                                     00270000
+V002800FIRST-PARA                                                        00280000
+V002900    MOVE LOW-VALUES TO KEYMAPO                                    00290000
+V003000    PERFORM SEND-FIRST-MAP.                                       00300000
+V003100SEND-FIRST-MAP                                                    00310000
+V003200    PERFORM DATE-TIME-PARA                                        00320000
+V003300    EXEC CICS SEND                                                00330000
+V003400         MAP('KEYMAP')                                            00340000
+V003500         MAPSET('P13AS05')                                        00350000
+V003600         FROM('KEYMAPO')                                          00360000
+V003700         ERASE                                                    00370000
+V003800    END-EXEC.                                                     00380000
+V003900    SET PROCESS-KEY TO TRUE.                                      00390000
+V004000DATE-TIME-PARA.                                                   00400000
+V004100        EXEC CICS ASKTIME                                         00410000
+V004200             ABSTIME(WS-DATE-TIME)                                00420000
+V004300        END-EXEC                                                  00430000
+V004400        EXEC CICS FORMATTIME                                      00440000
+V004500             ABSTIME(WS-DATE-TIME)                                00450000
+V004600             DDMMYYYY(DATEO)                                      00460000
+V004700             DATESEP                                              00470000
+V004800             TIME(TIMEO)                                          00480000
+V004900             TIMESEP                                              00490000
+V005000         END-EXEC.                                                00500000
+V005100NEXT-PARA.                                                        00510000
+V005200    EVALUATE TRUE                                                 00520000
+V005300      WHEN PROCESS-KEY                                            00530000
+V005400        PERFORM KEY-PARA                                          00540000
+V005500      WHEN PROCESS-DET                                            00550000
+V005600        PERFORM DETAIL-PARA                                       00560000
+V005700    END-EVALUATE.                                                 00570000
+V005800SEND-PARA.                                                        00580000
+V005900    EVALUATE TRUE                                                 00590000
+V006000      WHEN PROCESS-KEY                                            00600000
+V006100       EXEC CICS SEND                                             00610000
+V006200           MAP('KEYMAP')                                          00620000
+V006300           MAPSET('P13AS05')                                      00630000
+V006400           FROM(KEYMAPO)                                          00640000
+V006500           ERASE                                                  00650000
+V006600       END-EXEC.                                                  00660000
+V006700      WHEN PROCESS-DET                                            00670000
+V006800       EXEC CICS SEND                                             00680000
+V006900            MAP('DETMAP')                                         00690000
+V007000            MAPSET('P13AS05')                                     00700000
+V007100            FROM(DETMAPO)                                         00710000
+V007200            ERASE                                                 00720000
+V007300       END-EXEC.                                                  00730000
+V007400    END-EVALUATE.                                                 00740000
+V007500NEXT-PARA-X.                                                      00750000
+V007600    EXIT.                                                         00760000
+V007700KEY-PARA.                                                         00770000
+V007800    EVALUATE EIBAID                                               00780000
+V007900       WHEN DFHENTER                                              00790000
+V008000           PERFORM PROCESS-KEY-MAP                                00800000
+V008100       WHEN DFHPF3                                                00810000
+V008200           EXEC CICS XCTL                                         00820000
+V008300               PROGRAM('P13AP03')                                 00830000
+V008400           END-EXEC.                                              00840000
+V008500       WHEN OTHER                                                 00850000
+V008600       MOVE 'INVALID KEY PRESSED' TO MSG1O                        00860000
+V008700    END-EVALUATE.                                                 00870000
+V008800PROCESS-KEY-MAP.                                                  00880000
+V008900    EXEC CICS RECEIVE                                             00890000
+V009000        MAP('KEYMAP')                                             00900000
+V009100        MAPSET('P13AS05')                                         00910000
+V009200        INTO(KEYMAPI)                                             00920000
+V009300    END-EXEC.                                                     00930000
+V009400    IF                                                            00940000
+V009500      EMPID1L = 0                                                 00950000
+V009600      MOVE 'ENTER AN EMP ID' TO MSG1O                             00960000
+V009700    ELSE                                                          00970000
+V009800      PERFORM READ-EMPLOYEE-PARA.                                 00980000
+V009900    END-IF.                                                       00990000
+V010000READ-EMPLOYEE-PARA.                                               01000000
+V010100    EXEC CICS READ                                                01010000
+V010200        FILE('P13AFILE')                                          01020000
+V010300        INTO(MASTER-RECORD)                                       01030000
+V010400        RIDFLD(EMPID1I)                                           01040000
+V010500        RESP(WS-RESP-CODE)                                        01050000
+V010600    END-EXEC.                                                     01060000
+V010700    EVALUATE WS-RESP-CODE                                         01070000
+V010800         WHEN DFHRESP(NORMAL)                                     01080000
+V010900              PERFORM MOVE-PARA                                   01090000
+V011000         WHEN DFHRESP(NOTFND)                                     01100000
+V011100         MOVE 'RECORD NOT FOUND' TO MESSAGEO                      01110000
+V011200         MOVE SPACES TO NAMEQO, DOBQO,                            01120000
+V011300                    LOCQO, TECHQO, EARNQO, DEDNQO,                01130000
+V011400                    SALQO                                         01140000
+V011500         WHEN OTHER                                               01150000
+V011600         MOVE 'CAN NOT ACCESS FILE' TO MESSAGEO                   01160000
+V011700    END-EVALUATE.                                                 01170000
+V011800    SET PROCESS-UPD-DEL TO TRUE                                   01180000
+V011900    Move 'Update / Delete' to MODEO                               01190000
+V012000    Move DFHBMDAR to LABEL1A                                      01200000
+V012100    Move DFHBMPRO to LABEL2A                                      01210000
+V012200    If NOTFND                                                     01220000
+V012300    Move Spaces to Symbolic Map Variables                         01230000
+V012400    SET PROCESS-ADD TO TRUE       (Move '2' to WS-PROCESS-KEY)    01240000
+V012500    Move 'Add Employee' to MODEO                                  01250000
+V012600    Move DFHBMPRO to LABEL1A                                      01260000
+V012700    Move DFHBMDAR to LABEL2A                                      01270000
+V012800Send Detail Map                                                   01280000
+V012900    Get the Date & Time                                           01290000
+V013000    Send the Detail Map                                           01300000
+V013100MOVE-PARA.                                                        01310000
+V013200    MOVE NAME  TO NAMEQO                                          01320000
+V013300    PERFORM DOB-PARA                                              01330000
+V013400    MOVE TECH  TO TECHQO                                          01340000
+V013500    MOVE LOC   TO LOCQO                                           01350000
+V013600    MOVE EARN  TO WS-EARN                                         01360000
+V013700    MOVE WS-EARN  TO EARNQO                                       01370000
+V013800    MOVE DEDN  TO WS-DEDN                                         01380000
+V013900    MOVE WS-DEDN TO DEDNQO                                        01390000
+V014000    COMPUTE SAL = EARN - DEDN                                     01400000
+V014100    MOVE SAL   TO WS-SAL                                          01410000
+V014200    MOVE WS-SAL   TO SALQO                                        01420000
+V014300    MOVE 'EMPLOYEE RECORD FOUND' TO MESSAGEO.                     01430000
+V014400Process Detail Para                                               01440000
+V014500    Evaluate EIBAID                                               01450000
+V014600    When PF2                                                      01460000
+V014700       if PROCESS-ADD                                             01470000
+V014800          Perform Add Para                                        01480000
+V014900       ELSE                                                       01490000
+V015000          Move 'PF2 not enabled' to MSG2O                         01500000
+V015100    When PF3                                                      01510000
+V015200       SET PROCESS-KEY TO TRUE    (Move '1' to WS-PROCESS-KEY)    01520000
+V015300    When PF4                                                      01530000
+V015400       if PROCESS-UPD-DEL                                         01540000
+V015500          Perform Update Para                                     01550000
+V015600       ELSE                                                       01560000
+V015700          Move 'PF4 not enabled' to MSG2O                         01570000
+V015800    When PF5                                                      01580000
+V015900       if PROCESS-UPD-DEL                                         01590000
+V016000          Perform Delete Para                                     01600000
+V016100       ELSE                                                       01610000
+V016200          Move 'PF5 not enabled' to MSG2O                         01620000
+V016300    When Other                                                    01630000
+V016400       Move 'Invalid Key Pressed' to MSG2O                        01640000
+V016500Delete Para                                                       01650000
+V016600    DELETE FILE('PnnAFILE') RIDFLD(WS-EMP-ID)                     01660000
+V016700    If Normal                                                     01670000
+V016800    Move 'Delete Successful' to MSG1O                             01680000
+V016900    Else                                                          01690000
+V017000    UNLOCK FILE('PnnAFILE')                                       01700000
+V017100    Move 'Delete not Successful' to MSG1O                         01710000
+V017200    end if                                                        01720000
+V017300    SET PROCESS-KEY TO TRUE      (Move '1' to WS-PROCESS-KEY)     01730000
