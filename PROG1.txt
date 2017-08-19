@@ -1,0 +1,31 @@
+000100  IDENTIFICATION DIVISION.                                        00010000
+000200  PROGRAM-ID. PROG1.                                              00020000
+000300  DATA DIVISION.                                                  00030000
+000400  WORKING-STORAGE SECTION.                                        00040000
+000500  01 WS-EMP-ID   PIC X(05) VALUE SPACES.                          00050000
+000600      EXEC SQL                                                    00060004
+000700           INCLUDE EMPLOYEE                                       00070002
+000800      END-EXEC.                                                   00080004
+000900      EXEC SQL                                                    00090004
+001000       INCLUDE SQLCA                                              00100003
+001100       END-EXEC.                                                  00110004
+001200  PROCEDURE DIVISION.                                             00120000
+001300          ACCEPT WS-EMP-ID.                                       00130000
+001400          EXEC SQL                                                00140000
+001500         SELECT  EMP_ID, EMP_NAME, EMP_LOC, EMP_DOB, EMP_TECH,    00150003
+001600          EMP_EARN,  EMP_DEDN                                     00160003
+001700            INTO :EMP-ID, :EMP-NAME, :EMP-LOC, :EMP-DOB, :EMP-TECH00170001
+001800                , :EMP-EARN, :EMP-DEDN                            00180005
+001900                 FROM T07_EMPLOYEE_TABLE                          00190006
+002000                 WHERE EMP_ID = :WS-EMP-ID                        00200001
+002100             END-EXEC.                                            00210003
+002200      DISPLAY 'SELECT SQL =', SQLCODE                             00220006
+002300      EVALUATE SQLCODE                                            00230006
+002400      WHEN ZERO                                                   00240006
+002500            DISPLAY 'EMP=', EMPLOYEE-RECORD                       00250006
+002600      WHEN 100                                                    00260006
+002700            DISPLAY 'INVALID EMP ID', WS-EMP-ID                   00270006
+002800      WHEN OTHER                                                  00280006
+002900            DISPLAY 'ERROR READING'                               00290006
+003000      END-EVALUATE.                                               00300006
+003100            STOP RUN.                                             00310003

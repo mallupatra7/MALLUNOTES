@@ -1,0 +1,97 @@
+000100  IDENTIFICATION DIVISION.                                        00010001
+000200  PROGRAM-ID. PROG2.                                              00020001
+000300  ENVIRONMENT DIVISION.                                           00030001
+000400  INPUT-OUTPUT SECTION.                                           00040001
+000500  FILE-CONTROL.                                                   00050001
+000600          SELECT REPORT-FILE ASSIGN TO OUTFILE                    00060007
+000700          ORGANIZATION IS SEQUENTIAL                              00070007
+000800          ACCESS MODE IS SEQUENTIAL                               00080007
+000900          FILE STATUS IS  WS-OUT-STAT.                            00090007
+001000  DATA DIVISION.                                                  00100001
+001100  FILE SECTION.                                                   00110001
+001200  FD REPORT-FILE                                                  00120002
+001300     RECORD CONTAINS 80 CHARACTERS                                00130002
+001400     RECORDING MODE IS F.                                         00140001
+001500  01 REPORT-RECORD           PIC X(80).                           00150008
+001600  WORKING-STORAGE SECTION.                                        00160001
+001700  01 WS-EMP-ID   PIC X(05).                                       00170010
+001800     88 END-OF-DATA       VALUE 'XXXXX'.                          00180010
+001900  01 WS-SAL      PIC 9(05)V99 VALUE ZERO.                         00190007
+002000  01 WS-OUT-STAT  PIC X(02).                                      00200005
+002100      88 OPEN-SUCCESS        VALUE '00'.                          00210005
+002200      EXEC SQL                                                    00220001
+002300           INCLUDE EMP1                                           00230011
+002400      END-EXEC.                                                   00240001
+002500      EXEC SQL                                                    00250001
+002600           INCLUDE LOCATION                                       00260001
+002700      END-EXEC.                                                   00270001
+002800      EXEC SQL                                                    00280001
+002900       INCLUDE SQLCA                                              00290001
+003000       END-EXEC.                                                  00300001
+003100 01 HEADING-LINE1.                                                00310007
+003200    03  FILLER           PIC X(06) VALUE '  ID  '.                00320007
+003300    03  FILLER           PIC X(16) VALUE '  EMP-NAME    '.        00330007
+003400    03  FILLER           PIC X(16) VALUE '   LOC-NAME   '.        00340007
+003500    03  FILLER           PIC X(6)  VALUE ' TECH '.                00350007
+003600    03  FILLER           PIC X(10) VALUE '  EARNINGS'.            00360007
+003700    03  FILLER           PIC X(10) VALUE ' DEDUCTION'.            00370007
+003800    03  FILLER           PIC X(11) VALUE ' TOTAL SAL'.            00380007
+003900 01  DETAIL-LINE.                                                 00390005
+004000     03  P-ID              PIC X(05) VALUE SPACES.                00400005
+004100     03  FILLER            PIC X(01) VALUE SPACES.                00410005
+004200     03  P-NAME            PIC X(15) VALUE SPACES.                00420005
+004300     03  FILLER            PIC X(01) VALUE SPACES.                00430005
+004400     03  P-LOC             PIC X(15) VALUE SPACES.                00440007
+004500     03  FILLER            PIC X(01) VALUE SPACES.                00450005
+004600     03  P-TECH            PIC X(05) VALUE SPACES.                00460005
+004700     03  FILLER            PIC X(01) VALUE SPACES.                00470005
+004800     03  P-EARN            PIC 9(05)V99 VALUE ZERO.               00480008
+004900     03  FILLER            PIC X(01) VALUE SPACES.                00490005
+005000     03  P-DEDN            PIC 9(05)V99 VALUE ZERO.               00500008
+005100     03  FILLER            PIC X(01) VALUE SPACES.                00510005
+005200     03  P-SAL             PIC ZZZ,Z9.99 VALUE ZERO.              00520005
+005300     03  FILLER            PIC X(01) VALUE SPACES.                00530005
+005400  PROCEDURE DIVISION.                                             00540005
+005500       ACCEPT WS-EMP-ID.                                          00550012
+005600  INIT-PARA.                                                      00560005
+005700      OPEN OUTPUT REPORT-FILE                                     00570008
+005800      DISPLAY WS-OUT-STAT                                         00580008
+005900      IF OPEN-SUCCESS                                             00590005
+006000         DISPLAY 'FILE OPENED SUCCESFULLY'                        00600008
+006100      END-IF.                                                     00610005
+006200      WRITE REPORT-RECORD FROM HEADING-LINE1.                     00620009
+006300      PERFORM PROCESS-PARA UNTIL END-OF-DATA                      00630011
+006400      CLOSE REPORT-FILE.                                          00640009
+006500            STOP RUN.                                             00650009
+006600  PROCESS-PARA.                                                   00660005
+006700          EXEC SQL                                                00670001
+006800       SELECT E.EMP_ID, E.EMP_NAME, L.LOC_NAME                    00680007
+006900        , E.EMP_TECH, E.EMP_EARN, E.EMP_DEDN                      00690007
+007000         INTO :EMP-ID, :EMP-NAME, :LOC-NAME, :EMP-TECH            00700007
+007100             ,  :EMP-EARN, :EMP-DEDN                              00710007
+007200         FROM T07_EMPLOYEE_TABLE E,                               00720001
+007300              T07_LOCATION_TABLE L                                00730001
+007400         WHERE E.EMP_LOC = L.LOC_ID                               00740007
+007500          AND E.EMP_ID = :WS-EMP-ID                               00750007
+007600             END-EXEC.                                            00760001
+007700      DISPLAY 'SELECT SQL =', SQLCODE                             00770001
+007800      EVALUATE SQLCODE                                            00780001
+007900      WHEN ZERO                                                   00790001
+008000            DISPLAY 'EMP=', EMPLOYEE-RECORD                       00800001
+008100            PERFORM MOVE-PARA                                     00810009
+008200            WRITE REPORT-RECORD FROM DETAIL-LINE                  00820012
+008300      WHEN 100                                                    00830001
+008400            DISPLAY 'INVALID EMP ID', WS-EMP-ID                   00840001
+008500      WHEN OTHER                                                  00850001
+008600            DISPLAY 'ERROR READING'                               00860001
+008700      END-EVALUATE.                                               00870012
+008800      ACCEPT WS-EMP-ID.                                           00880013
+008900   MOVE-PARA.                                                     00890009
+009000      MOVE EMP-ID TO P-ID                                         00900010
+009100      MOVE EMP-NAME TO P-NAME                                     00910010
+009200      MOVE LOC-NAME TO P-LOC                                      00920010
+009300      MOVE EMP-EARN TO P-EARN                                     00930010
+009400      MOVE EMP-DEDN TO P-DEDN                                     00940010
+009500      MOVE EMP-TECH TO P-TECH                                     00950010
+009600      COMPUTE WS-SAL = P-EARN - P-DEDN                            00960010
+009700      MOVE WS-SAL TO P-SAL.                                       00970009
